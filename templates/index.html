@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Tìm kiếm tiếng nhạc cụ bộ hơi</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .file-upload {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        input[type="file"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            flex-grow: 1;
+        }
+
+        input[type="submit"] {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+
+        .error {
+            color: #d32f2f;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #ffebee;
+            border-radius: 5px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+
+        .section h3 {
+            color: #555;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section h3:before {
+            content: "🎵";
+        }
+
+        .audio-item {
+            background: #f9f9f9;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .audio-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .audio-info p {
+            margin: 0;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .distance {
+            background-color: #e3f2fd;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.9em;
+            color: #1976d2;
+        }
+
+        audio {
+            width: 100%;
+            outline: none;
+            border-radius: 20px;
+            background-color: #f1f1f1;
+        }
+
+        .uploaded-file {
+            background-color: #e8f5e9;
+            border-left: 4px solid #2e7d32;
+        }
+
+        .uploaded-file .audio-info p {
+            color: #2e7d32;
+        }
+
+        .no-results {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+            background-color: #f5f5f5;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🎷 Tìm kiếm tiếng nhạc cụ bộ hơi 🎺</h1>
+        <form method="POST" enctype="multipart/form-data">
+            <div class="file-upload">
+                <input type="file" name="file" accept=".wav,.mp3" required>
+                <input type="submit" value="Tìm kiếm">
+            </div>
+            <small>Chỉ chấp nhận file WAV/MP3 (tối đa 10MB)</small>
+        </form>
+
+        {% if error_message %}
+        <div class="error">
+            <strong>Lỗi:</strong> {{ error_message }}
+        </div>
+        {% endif %}
+
+        <!-- Phần hiển thị file đã tải lên -->
+        {% if input_filename %}
+        <div class="section">
+            <h3>File bạn đã tải lên</h3>
+            <div class="audio-item uploaded-file">
+                <div class="audio-info">
+                    <p>{{ input_instrument_name }} ({{ input_filename }})</p>
+                </div>
+                <audio controls>
+                    <source src="{{ input_file_url }}" type="audio/wav">
+                    Trình duyệt của bạn không hỗ trợ phát âm thanh.
+                </audio>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Phần hiển thị kết quả -->
+        {% if results %}
+        <div class="section">
+            <h3>Top 3 kết quả phù hợp nhất</h3>
+            {% for result in results %}
+            <div class="audio-item">
+                <div class="audio-info">
+                    <p>{{ loop.index }}. {{ result.instrument_name }} ({{ result.filename }})</p>
+                    <span class="distance">Độ tương đồng: {{ result.distance|round(2) }}</span>
+                </div>
+                <audio controls>
+                    <source src="{{ result.audio_url }}" type="audio/wav">
+                    Trình duyệt của bạn không hỗ trợ phát âm thanh.
+                </audio>
+            </div>
+            {% endfor %}
+        </div>
+        {% elif request.method == 'POST' and not error_message %}
+        <div class="no-results">
+            <p>Không tìm thấy kết quả phù hợp. Vui lòng thử với file âm thanh khác.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- <script>
+        // Tự động phát file đầu vào khi trang tải xong
+        document.addEventListener('DOMContentLoaded', function () {
+            const uploadedAudio = document.querySelector('.uploaded-file audio');
+            if (uploadedAudio) {
+                uploadedAudio.play().catch(e => console.log("Auto-play prevented: ", e));
+            }
+        });
+    </script> -->
+</body>
+
+</html>
